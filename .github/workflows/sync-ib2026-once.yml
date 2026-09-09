@@ -1,0 +1,43 @@
+name: Sync ib2027 from ib2026 once
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/sync-ib2026-once.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-ib2027-from-ib2026-once
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ib2027
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Clone current ib2026 main
+        run: git clone --depth 1 --branch main https://github.com/modebrecht/ib2026.git /tmp/ib2026
+
+      - name: Mirror ib2026 files into ib2027
+        run: rsync -a --delete --exclude='.git' /tmp/ib2026/ ./
+
+      - name: Commit synced tree
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Already in sync"
+            exit 0
+          fi
+          git commit -m "Sync ib2027 with ib2026 main"
+          git push origin HEAD:main
