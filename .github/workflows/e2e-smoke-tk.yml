@@ -1,6 +1,9 @@
 name: E2E Smoke TK A1-A7
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       base_url:
@@ -22,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      BASE_URL: ${{ inputs.base_url }}
+      BASE_URL: ${{ inputs.base_url || 'https://ib2026.vercel.app' }}
 
     steps:
       - name: Checkout
@@ -40,7 +43,7 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Run TK A1-A7 production smoke + score history + persistence contract
-        run: npx playwright test e2e/tk-a1-a7.spec.js e2e/tk-score-history-fast.spec.js e2e/tk-persistence-contract.spec.js --browser=chromium --workers=1 --reporter=line,html
+        run: npx playwright test e2e/tk-a1-a7.spec.js e2e/tk-a7-full-play.spec.js e2e/tk-score-history-fast.spec.js e2e/tk-persistence-contract.spec.js --browser=chromium --workers=1 --reporter=line,html
 
       - name: Generate Gesamt-PDF via "Zwischenstand erzeugen"
         run: |
