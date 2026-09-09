@@ -7,14 +7,21 @@ on:
       - dev
     paths:
       - 'hw/create_p1_docx.py'
+      - 'hw/apply_p1_didactic_fixes.py'
       - 'hw/add_p1_bonus.py'
+      - 'hw/compact_p1_docx.py'
       - 'hw/fix_p1_docx_layout.py'
       - 'hw/validate_p1_docx.py'
       - 'hw/sync_p1_index.py'
+      - 'scripts/enforce_p1_docx_readability.py'
       - '.github/workflows/build-p1-docx.yml'
 
 permissions:
   contents: write
+
+concurrency:
+  group: p1-docx-dev-build
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -31,13 +38,23 @@ jobs:
       - name: Install dependency
         run: pip install python-docx
 
-      - name: Build, harden and validate DOCX
+      - name: Build, compact and validate DOCX
         run: |
           python hw/create_p1_docx.py
+          python hw/apply_p1_didactic_fixes.py
           python hw/add_p1_bonus.py
+          python hw/compact_p1_docx.py
           python hw/fix_p1_docx_layout.py
+          python scripts/enforce_p1_docx_readability.py hw/P1.docx
           python hw/validate_p1_docx.py
           python hw/sync_p1_index.py
+
+      - name: Upload DOCX for visual QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-docx
+          path: hw/P1.docx
+          if-no-files-found: error
 
       - name: Commit generated files
         run: |
@@ -49,4 +66,5 @@ jobs:
             exit 0
           fi
           git commit -m "Build P1 DOCX and sync index"
-          git push
+          git pull --rebase origin dev
+          git push origin HEAD:dev
