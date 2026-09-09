@@ -427,7 +427,7 @@ test.describe('HW production smoke: A1-A14', () => {
     expectNoPageErrors(errors);
   });
 
-  test('A13: completes Green IT learning tasks, persists and downloads PDF', async ({ page }) => {
+  test('A13: experiments with both energy sliders, answers the concept check and downloads PDF', async ({ page }) => {
     const errors = collectPageErrors(page);
     await openWorksheet(page, '/hw/A13.html');
 
@@ -440,9 +440,29 @@ test.describe('HW production smoke: A1-A14', () => {
     await page.locator('#task2 button').click();
     await expect(page.locator('#dot2')).toHaveClass(/done/);
 
+    await expect(page.getByText(/Smartphone ≈ 8 W/)).toBeVisible();
+    await expect(page.getByText(/PC\/Konsole ≈ 120 W/)).toBeVisible();
+    await expect(page.locator('#energyAnswerMobile')).toBeDisabled();
+    await expect(page.locator('#energyAnswerPc')).toBeDisabled();
+
     await page.locator('#mobileHours').focus();
     await page.locator('#mobileHours').press('ArrowRight');
+    await expect(page.locator('#dot3')).not.toHaveClass(/done/);
+    await expect(page.locator('#energyAnswerPc')).toBeDisabled();
+
+    await page.locator('#pcHours').focus();
+    await page.locator('#pcHours').press('ArrowRight');
+    await expect(page.locator('#dot3')).not.toHaveClass(/done/);
+    await expect(page.locator('#energyAnswerMobile')).toBeEnabled();
+    await expect(page.locator('#energyAnswerPc')).toBeEnabled();
+
+    await page.locator('#energyAnswerMobile').click();
+    await expect(page.locator('#dot3')).not.toHaveClass(/done/);
+    await expect(page.locator('#energyCheckFeedback')).toContainText('Vergleiche noch einmal');
+
+    await page.locator('#energyAnswerPc').click();
     await expect(page.locator('#dot3')).toHaveClass(/done/);
+    await expect(page.locator('#energyCheckFeedback')).toContainText('Richtig');
 
     await page.locator('#oldDevices').fill('2');
     const goodProcureIds = await page.evaluate(() => procure.filter((item) => item.good).map((item) => item.id));
@@ -459,7 +479,16 @@ test.describe('HW production smoke: A1-A14', () => {
     await expect(page.locator('#pct')).toHaveText('100% bearbeitet');
     await expect(page.locator('#pdf')).toHaveAttribute('data-unlocked', '1');
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem(K) || '{}'));
-    expect(saved.state).toMatchObject({ task2: true, task3: true, procure: true, recycle: true });
+    expect(saved.version).toBe(3);
+    expect(saved.state).toMatchObject({
+      task2: true,
+      task3: true,
+      energyTriedMobile: true,
+      energyTriedPc: true,
+      energyAnswer: 'pc',
+      procure: true,
+      recycle: true,
+    });
     expect(saved.vals.oldDevices).toBe('2');
     await downloadPdf(page, '#pdf', 'A13_Gruene_IT');
     expectNoPageErrors(errors);
@@ -495,16 +524,19 @@ test.describe('HW production smoke: A1-A14', () => {
     expectNoPageErrors(errors);
   });
 
-  test('Root: exposes A1-A14 and only manualDoneA6 completes A6', async ({ page }) => {
+  test('Root: exposes A1-A14 + P1 and only manualDoneA6 completes A6', async ({ page }) => {
     const errors = collectPageErrors(page);
     await seedStudent(page);
 
     await expect(page).toHaveTitle(/Informatische Bildung/);
-    await expect(page.locator('#hwKachel .hw-task-list .task-card')).toHaveCount(14);
+    await expect(page.locator('#hwKachel .hw-task-list .task-card')).toHaveCount(15);
     for (let n = 1; n <= 14; n += 1) {
       await expect(page.locator(`#title-A${n}`)).toBeAttached();
       await expect(page.locator(`a[href="hw/A${n}.html"]`)).toBeAttached();
     }
+
+    await expect(page.locator('#title-P1')).toBeAttached();
+    await expect(page.locator('a[href="hw/P1.docx"]')).toBeAttached();
 
     const a6Card = page.locator('#title-A6').locator('xpath=ancestor::div[contains(@class,"task-card")][1]');
     await page.evaluate(() => {

@@ -264,22 +264,35 @@
     try { work = JSON.parse(localStorage.getItem(workKey()) || 'null'); } catch (_) {}
     if (work) score = Math.max(0, Math.min(CASES.length, Number(work.score) || 0));
     var history = loadHistory('', CASES.length);
+    var nativeSave = save;
+    save = function () {
+      nativeSave();
+      try {
+        var d = JSON.parse(localStorage.getItem(K) || '{}') || {};
+        d.completed = completed.slice();
+        d.done = completed.slice();
+        d.score = score;
+        var h = loadHistory('', CASES.length);
+        if (h.bestScore !== null) d.bestScore = h.bestScore;
+        localStorage.setItem(K, JSON.stringify(d));
+      } catch (_) {}
+    };
     var resumeCompleted = false;
     var showSavedResult = false;
     if (work && work.active) {
-      if (Array.isArray(work.done)) done = work.done.filter(function(id){return CASES.some(function(c){return c.id===id})});
+      if (Array.isArray(work.done)) completed = work.done.filter(function(id){return CASES.some(function(c){return c.id===id})});
       var beforeResume = index;
-      while (index < CASES.length && done.includes(CASES[index].id)) index++;
-      if (index >= CASES.length && done.length >= CASES.length) resumeCompleted = true;
+      while (index < CASES.length && completed.includes(CASES[index].id)) index++;
+      if (index >= CASES.length && completed.length >= CASES.length) resumeCompleted = true;
       else if (index !== beforeResume) { render(); save(); }
     } else if (work && work.active === false && history.attempts && index >= CASES.length) {
       showSavedResult = true;
     } else if (!history.attempts && index >= CASES.length) {
-      index = 0; done = []; score = 0;
+      index = 0; completed = []; score = 0;
     }
 
     function saveWork(active) {
-      localStorage.setItem(workKey(), JSON.stringify({version:1,active:active !== false,index:index,score:score,done:done.slice()}));
+      localStorage.setItem(workKey(), JSON.stringify({version:1,active:active !== false,index:index,score:score,done:completed.slice()}));
     }
     function highlightCorrect(caseObj) {
       var correct = document.querySelector('.device-card[data-id="' + caseObj.correct + '"]');
@@ -304,7 +317,7 @@
       var c = CASES[index], ok = id === c.correct;
       answered = true;
       if (ok) score += 1;
-      if (!done.includes(c.id)) done.push(c.id);
+      if (!completed.includes(c.id)) completed.push(c.id);
       document.querySelectorAll('.device-card').forEach(function (b) {
         b.disabled = true;
         if (b.dataset.id !== c.correct && b !== button) b.classList.add('dim');
@@ -318,7 +331,7 @@
     };
 
     updateProgress = function () {
-      var p = Math.round(done.length/CASES.length*100), b = $('pdf'), h = loadHistory('', CASES.length);
+      var p = Math.round(completed.length/CASES.length*100), b = $('pdf'), h = loadHistory('', CASES.length);
       $('pct').textContent = p + '% bearbeitet'; $('bar').style.width = p + '%';
       var unlocked = h.bestScore !== null && h.bestScore >= 3;
       b.className = unlocked ? 'w-10 h-10 rounded-xl bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'w-10 h-10 rounded-xl bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600';
@@ -346,7 +359,7 @@
     };
 
     startOver = function () {
-      index = 0; done = []; answered = false; dialogueOpen = false; score = 0;
+      index = 0; completed = []; answered = false; dialogueOpen = false; score = 0;
       saveWork(true); render(); save(); renderPanel('', CASES.length, false);
     };
     resetA11 = function () {

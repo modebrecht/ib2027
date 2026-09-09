@@ -42,7 +42,7 @@ def set_cell_margins(cell, top=100, start=100, bottom=100, end=100):
     if tcMar is None:
         tcMar = OxmlElement('w:tcMar')
         tcPr.append(tcMar)
-    for m, v in [('top',top),('start',start),('bottom',bottom),('end',end)]:
+    for m, v in [('top',top),('left',start),('bottom',bottom),('right',end)]:
         node = tcMar.find(qn(f'w:{m}'))
         if node is None:
             node = OxmlElement(f'w:{m}')
@@ -189,14 +189,21 @@ for idx,text in enumerate(eva,1):
     p=cells[1].paragraphs[0]; p.alignment=WD_ALIGN_PARAGRAPH.CENTER; p.add_run('________').font.size=Pt(10)
 
 add_task_heading(3,'EVA verstehen',3)
-add_instruction('Ein Schüler sagt: „Der Monitor verarbeitet die Daten, weil er das Bild erzeugt.“ Erkläre, warum diese Aussage nicht stimmt.')
-add_answer_lines(4)
+add_instruction('Ein Schüler sagt: „Der Monitor verarbeitet die Daten, weil er das Bild erzeugt.“ Beantworte die drei Teilfragen. Jede Teilfrage gibt 1 Punkt.')
+eva_understanding=[
+    '1. Welche Rolle hat der Monitor im EVA-Prinzip: Eingabe, Verarbeitung oder Ausgabe?',
+    '2. Welche Komponente verarbeitet bzw. berechnet die Bildinformationen hauptsächlich?',
+    '3. Was macht der Monitor mit dem bereits berechneten Ergebnis?'
+]
+for question in eva_understanding:
+    p=doc.add_paragraph(question); p.runs[0].font.size=Pt(9.3); p.paragraph_format.space_after=Pt(1)
+    add_answer_lines(1)
 
 add_task_heading(4,'Anschlüsse',6)
-add_instruction('Wähle den passendsten Anschluss aus der Auswahl und schreibe ihn hin.')
+add_instruction('Wähle den passendsten Anschluss aus der Auswahl und schreibe ihn hin. Jeder Anschluss wird genau einmal verwendet.')
 p=doc.add_paragraph(); p.paragraph_format.space_after=Pt(5)
 r=p.add_run('Auswahl: HDMI · RJ45/Ethernet · 3,5-mm-Klinke · USB-C · VGA · M.2'); r.bold=True; r.font.size=Pt(9)
-ports=['Moderner Monitor oder Fernseher mit Bild und Ton','Netzwerkkabel zum Router','Kopfhörer mit klassischem Audiostecker','Moderner USB-Stick oder Smartphone','Älterer Monitor mit analogem Bildsignal','Interne SSD direkt auf dem Mainboard']
+ports=['Moderner Monitor oder Fernseher mit Bild und Ton','Netzwerkkabel zum Router','Kopfhörer mit klassischem Audiostecker','Modernes Smartphone mit einem kleinen, beidseitig einsteckbaren Anschluss zum Laden und zur Datenübertragung','Älterer Monitor mit analogem Bildsignal','Interne SSD direkt auf dem Mainboard']
 t=doc.add_table(rows=0, cols=2); t.alignment=WD_TABLE_ALIGNMENT.CENTER; t.autofit=False; t.columns[0].width=Cm(14.2); t.columns[1].width=Cm(3.6)
 for idx,text in enumerate(ports,1):
     cells=t.add_row().cells
@@ -209,7 +216,7 @@ add_instruction('Wähle jeweils die beste Lösung. Bei den offenen Fragen antwor
 items=[
 ('1. Ein PC soll schneller starten und Programme schneller öffnen.','☐ RAM    ☐ HDD    ☐ SSD'),
 ('2. 4 TB Fotos sollen möglichst günstig archiviert werden.','☐ RAM    ☐ HDD    ☐ SSD'),
-('3. Ein Schüler öffnet gleichzeitig Browser, Teams, PowerPoint und ein Bildbearbeitungsprogramm. Der PC wird dabei langsam.','☐ RAM    ☐ HDD    ☐ SSD')]
+('3. Ein Schüler hat nur 4 GB RAM. Beim gleichzeitigen Arbeiten mit Browser, Teams, PowerPoint und Bildbearbeitung zeigt der Task-Manager 95 % RAM-Auslastung, während der Datenträger nur bei 20 % liegt. Welche Aufrüstung hilft hier am direktesten?','☐ RAM    ☐ HDD    ☐ SSD')]
 for q,opts in items:
     p=doc.add_paragraph(); p.paragraph_format.space_after=Pt(1); p.add_run(q).font.size=Pt(9.3)
     p=doc.add_paragraph(); p.paragraph_format.left_indent=Cm(.35); p.paragraph_format.space_after=Pt(4); r=p.add_run(opts); r.font.size=Pt(9.2); r.bold=True
@@ -224,17 +231,19 @@ for j,title in enumerate(['LAPTOP A','LAPTOP B']):
 vals=['8 GB RAM\n256 GB SSD\nsehr starke Grafikkarte\nCHF 1\'500','16 GB RAM\n512 GB SSD\nnormale integrierte Grafik\nCHF 850']
 for j,text in enumerate(vals):
     c=lt.cell(1,j); shade(c,'F8FAFC'); set_cell_margins(c,top=120,bottom=120,start=140,end=140); p=c.paragraphs[0]; p.alignment=WD_ALIGN_PARAGRAPH.CENTER; r=p.add_run(text); r.font.size=Pt(9.5); r.bold=True
-p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(6); p.add_run('Welchen Laptop würdest du empfehlen? Begründe mit mindestens zwei sinnvollen Argumenten.').bold=True
+p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(6); p.add_run('Welchen Laptop würdest du empfehlen? Nenne drei kurze, sinnvolle Gründe für deine Entscheidung.').bold=True
+p=doc.add_paragraph('Entscheidung: 1 P · Gründe: je 1 P, max. 3 P'); p.runs[0].font.size=Pt(8.8); p.runs[0].font.color.rgb=RGBColor.from_string(MUTED)
 add_answer_lines(5)
 
 add_task_heading(7,'Troubleshooting',6)
-add_instruction('Bei jedem Fall gehören zwei Aktionen nicht zu einem sinnvollen ersten Troubleshooting-Ablauf. Streiche diese zwei Aktionen.')
+add_instruction('Bei jedem Fall gehören zwei Aktionen nicht zu den sinnvollen ersten Troubleshooting-Schritten. Streiche diese zwei Aktionen.')
 troubles=[
-('A) PC startet nicht – 2 P',['Steckdose prüfen','Stromkabel prüfen','Netzschalter am Netzteil prüfen','Windows neu installieren','Monitor heller stellen','andere Steckdose testen']),
-('B) Monitor zeigt kein Bild – 2 P',['Prüfen, ob der Monitor eingeschaltet ist','HDMI-/DisplayPort-Kabel prüfen','richtigen Eingang am Monitor auswählen','Tastatur austauschen','Druckertreiber installieren','Kabel an einem anderen Anschluss testen']),
-('C) Kein Internet über Netzwerkkabel – 2 P',['RJ45-Kabel prüfen','prüfen, ob das Kabel am Router/Switch steckt','anderen Netzwerkanschluss testen','Grafikkarte ausbauen','Audiokabel ersetzen','Router bzw. Netzwerkstatus prüfen'])]
-for title,opts in troubles:
+('A) PC reagiert gar nicht – 2 P','Beim Drücken des Einschaltknopfs passiert nichts: keine LEDs, keine Lüfter, kein Geräusch.',['Steckdose prüfen','Stromkabel prüfen','Netzschalter am Netzteil prüfen','HDMI-/DisplayPort-Kabel zum Monitor prüfen','andere Steckdose testen','Windows-Startreparatur ausführen']),
+('B) Monitor meldet „Kein Signal“ – 2 P','Der PC läuft: LEDs und Lüfter sind an, aber der Monitor meldet direkt beim Einschalten „Kein Signal“.',['Prüfen, ob der Monitor eingeschaltet ist','HDMI-/DisplayPort-Kabel prüfen','richtigen Eingang am Monitor auswählen','Windows-Anzeigeeinstellungen ändern','Grafiktreiber neu installieren','Kabel an einem anderen Anschluss testen']),
+('C) Kein Internet über Netzwerkkabel – 2 P','Am PC steht „Netzwerkkabel nicht angeschlossen“.',['RJ45-Kabel an PC und Router/Switch prüfen','anderes Netzwerkkabel testen','anderen Netzwerkanschluss am Router/Switch testen','DNS-Serveradresse ändern','WLAN-Passwort neu eingeben','Netzwerkstatus bzw. Link-Anzeige am Anschluss prüfen'])]
+for title,scenario,opts in troubles:
     p=doc.add_paragraph(style='Heading 2'); p.add_run(title); set_keep_with_next(p,True)
+    p=doc.add_paragraph(scenario); p.paragraph_format.space_after=Pt(3); p.runs[0].font.size=Pt(8.9); p.runs[0].font.color.rgb=RGBColor.from_string(MUTED)
     tb=doc.add_table(rows=0, cols=2); tb.alignment=WD_TABLE_ALIGNMENT.LEFT; tb.autofit=False; tb.columns[0].width=Cm(8.9); tb.columns[1].width=Cm(8.9)
     for k in range(0,6,2):
         cells=tb.add_row().cells
@@ -259,6 +268,5 @@ doc.core_properties.title='P1 – Übungstest Hardware'
 doc.core_properties.subject='Hardware A1–A14'
 doc.core_properties.author=''
 doc.core_properties.keywords='Hardware, Übungstest, Informatik'
-
 doc.save(OUT)
 print(OUT)

@@ -517,6 +517,49 @@
       box-shadow: 0 4px 12px rgba(37,99,235,.35);
     }
 
+    /* Tastenkombinationen P1: text labels must not inherit the generic icon-box sizing. */
+    #tkKachel .unterkachel-head > div {
+      min-width: 0;
+      flex: 1 1 220px;
+    }
+
+    #tkKachel .unterkachel-title .task-number {
+      width: auto;
+      min-width: 32px;
+      height: auto;
+      min-height: 32px;
+      padding: 4px 8px;
+      line-height: 1;
+    }
+
+    #tkKachel .unterkachel-title .task-name {
+      display: inline-flex;
+      width: auto;
+      height: auto;
+      min-width: 0;
+      flex: 1 1 auto;
+      justify-content: flex-start;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      font-size: inherit;
+      line-height: 1.25;
+      white-space: normal;
+    }
+
+    #tkKachel .btn-link:not(:empty) {
+      width: auto;
+      height: auto;
+      min-width: 64px;
+      min-height: 44px;
+      padding: 8px 12px;
+      font-size: calc(12px * var(--font-scale));
+      font-weight: 800;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
     /* Premium hardware task list */
     .hw-task-list{gap:10px;margin-top:12px}
     .hw-task-list .task-card{position:relative;overflow:hidden;isolation:isolate;min-height:66px;padding:10px 12px 10px 14px;border-radius:22px;background:linear-gradient(135deg,var(--card),var(--card-soft));border:1px solid var(--line);box-shadow:0 9px 24px rgba(15,23,42,.06);cursor:pointer;transition:transform .22s cubic-bezier(.2,.9,.2,1),border-color .22s ease,box-shadow .22s ease;animation:taskCardIn .46s cubic-bezier(.2,.9,.2,1) both}
@@ -1361,6 +1404,16 @@
                   <a href="tk2/index.html" target="_blank" rel="noopener" class="btn-link" title="Kurs in neuem Tab öffnen" aria-label="Kurs in neuem Tab öffnen"></a>
                 </div>
               </div>
+    <div class="unterkachel">
+      <div class="unterkachel-head">
+        <div>
+          <h4 class="unterkachel-title" id="title-TK-P1" style="margin-bottom: 2px;">
+            <span class="task-number">P1</span><span class="task-name">Übungsprüfung Tastenkombinationen</span>
+          </h4>
+        </div>
+        <a href="tk2/P1.docx" download="P1_Uebungspruefung_Tastenkombinationen.docx" class="btn-link" title="Übungsprüfung herunterladen" aria-label="Übungsprüfung als DOCX herunterladen"><span class="btn-status-text">DOCX ↓</span></a>
+      </div>
+    </div>
             </div>
           </div>
         </div>

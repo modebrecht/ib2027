@@ -1,6 +1,9 @@
 (function(){
   'use strict';
 
+  if(window.__tk2QuestAttemptsInitialized)return;
+  window.__tk2QuestAttemptsInitialized=true;
+
   var STORE='tk_quest_attempts_v1';
   var TRACKED=/^q[1-6]$/;
 
@@ -24,11 +27,13 @@
   }
 
   var previousSave=window.saveQuestScore;
-  if(typeof previousSave==='function'){
-    window.saveQuestScore=function(questId,percentage){
+  if(typeof previousSave==='function'&&!previousSave.__tk2AttemptsWrapped){
+    var wrappedSave=function(questId,percentage){
       record(questId,percentage);
       return previousSave.apply(this,arguments);
     };
+    wrappedSave.__tk2AttemptsWrapped=true;
+    window.saveQuestScore=wrappedSave;
   }
 
   function formattedScores(){

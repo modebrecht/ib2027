@@ -56,15 +56,22 @@ for idx, table in enumerate(doc.tables, 1):
 for p in all_paragraphs(doc):
     if re.search(r'_{%d,}' % (MAX_UNDERSCORES + 1), p.text):
         fail(f'long unbreakable underscore sequence remains: {p.text[:50]!r}')
+    if re.fullmatch(r'_{4,}', p.text.strip()):
+        fail('underscore-only answer placeholder remains; field is not direct-write')
 
 if any(p._p.xpath('.//w:br[@w:type="page"]') for p in doc.paragraphs):
     fail('literal page-break paragraph remains and may create a blank page after reflow')
 
 green_heading = next((p for p in doc.paragraphs if p.text.strip().startswith('8. Green IT')), None)
-if green_heading is None or not green_heading.paragraph_format.page_break_before:
-    fail('Green IT page break is not attached to the heading')
+if green_heading is None:
+    fail('Green IT heading missing')
+if green_heading.paragraph_format.page_break_before:
+    fail('Green IT is still forced onto a new page')
 
 if not any('Bonus 1 – Hardware Detective' in p.text for p in doc.paragraphs):
     fail('bonus section missing')
 
-print(f'P1 DOCX QA passed: {len(doc.tables)} tables, fixed safe widths, no overflow-prone rule text.')
+if not any('Nenne ein passendes Beispiel für die Eingabe dieser EVA-Kette' in p.text for p in doc.paragraphs):
+    fail('direct-write EVA input question missing')
+
+print(f'P1 DOCX QA passed: {len(doc.tables)} tables, direct-write fields, compact natural page flow.')
