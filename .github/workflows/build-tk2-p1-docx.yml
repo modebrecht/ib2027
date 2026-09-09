@@ -1,0 +1,61 @@
+name: Build TK2 P1 DOCX
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'tk2/P1.md'
+      - 'tk2/create_p1_docx.py'
+      - 'tk2/compact_p1_layout.py'
+      - 'scripts/enforce_p1_docx_readability.py'
+      - '.github/workflows/build-tk2-p1-docx.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p1-docx-dev-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependency
+        run: pip install python-docx
+
+      - name: Build TK2 P1 DOCX
+        run: |
+          python tk2/create_p1_docx.py
+          python tk2/compact_p1_layout.py
+          python scripts/enforce_p1_docx_readability.py tk2/P1.docx
+
+      - name: Upload DOCX for visual QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: tk2-p1-docx
+          path: tk2/P1.docx
+          if-no-files-found: error
+
+      - name: Commit generated DOCX
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tk2/P1.docx
+          if git diff --cached --quiet; then
+            echo "No generated changes"
+            exit 0
+          fi
+          git commit -m "Build TK2 P1 DOCX"
+          git pull --rebase origin dev
+          git push origin HEAD:dev
