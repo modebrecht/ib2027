@@ -1,4 +1,4 @@
-name: E2E Smoke TK A1-A7
+name: E2E Smoke TK A1-A8
 
 on:
   push:
@@ -9,23 +9,23 @@ on:
       base_url:
         description: Vercel production base URL
         required: true
-        default: https://ib2026.vercel.app
+        default: https://ib2027.vercel.app
         type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: e2e-smoke-tk-a1-a7
+  group: e2e-smoke-tk-a1-a8
   cancel-in-progress: false
 
 jobs:
   smoke:
-    name: Chromium smoke TK A1-A7 + history + persistence + Gesamt-PDF
+    name: Chromium smoke TK A1-A8 + retries + history + persistence + PDFs
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      BASE_URL: ${{ inputs.base_url || 'https://ib2026.vercel.app' }}
+      BASE_URL: ${{ inputs.base_url || 'https://ib2027.vercel.app' }}
 
     steps:
       - name: Checkout
@@ -42,8 +42,8 @@ jobs:
           npm install --no-save @playwright/test
           npx playwright install --with-deps chromium
 
-      - name: Run TK A1-A7 production smoke + score history + persistence contract
-        run: npx playwright test e2e/tk-a1-a7.spec.js e2e/tk-a7-full-play.spec.js e2e/tk-score-history-fast.spec.js e2e/tk-persistence-contract.spec.js --browser=chromium --workers=1 --reporter=line,html
+      - name: Run TK A1-A7 production smoke + unlimited retries + score history + persistence contract
+        run: npx playwright test e2e/tk-a1-a7.spec.js e2e/tk-a7-full-play.spec.js e2e/tk-score-history-fast.spec.js e2e/tk-persistence-contract.spec.js e2e/tk-unlimited-retries.spec.js --browser=chromium --workers=1 --reporter=line,html
 
       - name: Generate Gesamt-PDF via "Zwischenstand erzeugen"
         run: |
@@ -54,7 +54,7 @@ jobs:
           const { chromium } = require('@playwright/test');
 
           (async () => {
-            const baseUrl = (process.env.BASE_URL || 'https://ib2026.vercel.app').replace(/\/$/, '');
+            const baseUrl = (process.env.BASE_URL || 'https://ib2027.vercel.app').replace(/\/$/, '');
             const browser = await chromium.launch();
             const context = await browser.newContext({ acceptDownloads: true });
             const page = await context.newPage();
@@ -192,13 +192,49 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Wait for current A8 production bundle
+        run: |
+          A8_URL="${BASE_URL%/}/tk2/A8/"
+          for i in {1..60}; do
+            if curl -fsS "$A8_URL" | grep -Fq 'arena-dev-fix.js?v=59809da9'; then
+              echo "A8 production bundle is current: $A8_URL"
+              exit 0
+            fi
+            echo "Waiting for current A8 production bundle ($i/60)..."
+            sleep 5
+          done
+          echo "Current A8 production bundle did not become available in time: $A8_URL" >&2
+          exit 1
+
+      - name: Fetch pinned A8 full-course E2E
+        run: |
+          mkdir -p .qa-runtime smoke-artifacts/a8
+          curl -fsSL \
+            https://raw.githubusercontent.com/modebrecht/ib2026/3b7842454774e9a271ba56cc81445dc54e423736/qa/a8-full-course-report-e2e.mjs \
+            -o .qa-runtime/a8-full-course-report-e2e.mjs
+
+      - name: Run A8 30-section production E2E and export report files
+        run: |
+          A8_URL="${BASE_URL%/}/tk2/A8/" \
+          A8_OUT_DIR="smoke-artifacts/a8" \
+          node .qa-runtime/a8-full-course-report-e2e.mjs
+
+      - name: Upload A8 E2E exports
+        uses: actions/upload-artifact@v4
+        with:
+          name: a8-full-course-main-${{ github.run_id }}
+          path: smoke-artifacts/a8/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Upload failure evidence
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-smoke-tk-a1-a7-${{ github.run_id }}
+          name: e2e-smoke-tk-a1-a8-${{ github.run_id }}
           path: |
             test-results/
             playwright-report/
+            smoke-artifacts/a8/
           if-no-files-found: ignore
           retention-days: 7
