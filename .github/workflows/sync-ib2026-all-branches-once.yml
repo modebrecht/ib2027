@@ -1,0 +1,61 @@
+name: Sync ib2027 branches from ib2026 once
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/sync-ib2026-all-branches-once.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-ib2027-from-ib2026-all-branches-once
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ib2027 main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync dev, render and main from ib2026
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for branch in dev render main; do
+            echo "=== Syncing $branch ==="
+            rm -rf /tmp/ib2026-sync
+            git clone --depth 1 --branch "$branch" https://github.com/modebrecht/ib2026.git /tmp/ib2026-sync
+
+            git fetch origin "$branch"
+            git checkout -B "$branch" "origin/$branch"
+
+            rsync -a --delete \
+              --exclude='.git' \
+              --exclude='.github/workflows/sync-ib2026-all-branches-once.yml' \
+              /tmp/ib2026-sync/ ./
+
+            if [ "$branch" = "main" ]; then
+              rm -f .github/workflows/sync-ib2026-all-branches-once.yml
+            fi
+
+            git add -A
+            if git diff --cached --quiet; then
+              echo "$branch already matches ib2026"
+            else
+              git commit -m "sync: mirror ib2026/$branch into ib2027/$branch"
+              git push origin "HEAD:$branch"
+            fi
+          done
