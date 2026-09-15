@@ -9,7 +9,7 @@ on:
       base_url:
         description: Vercel production base URL
         required: true
-        default: https://ib2026.vercel.app
+        default: https://ib2027.vercel.app
         type: string
 
 permissions:
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      BASE_URL: ${{ inputs.base_url || 'https://ib2026.vercel.app' }}
+      BASE_URL: ${{ inputs.base_url || 'https://ib2027.vercel.app' }}
 
     steps:
       - name: Checkout
@@ -54,7 +54,7 @@ jobs:
           const { chromium } = require('@playwright/test');
 
           (async () => {
-            const baseUrl = (process.env.BASE_URL || 'https://ib2026.vercel.app').replace(/\/$/, '');
+            const baseUrl = (process.env.BASE_URL || 'https://ib2027.vercel.app').replace(/\/$/, '');
             const browser = await chromium.launch();
             const context = await browser.newContext({ acceptDownloads: true });
             const page = await context.newPage();

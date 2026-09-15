@@ -4,13 +4,17 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - dev
     paths:
       - 'create_favicon.py'
       - '.github/workflows/build-favicons.yml'
 
 permissions:
   contents: write
+
+concurrency:
+  group: favicons-dev-build
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -59,4 +63,5 @@ jobs:
             exit 0
           fi
           git commit -m "feat: add HW and TK favicons"
-          git push
+          git pull --rebase origin dev
+          git push origin HEAD:dev
