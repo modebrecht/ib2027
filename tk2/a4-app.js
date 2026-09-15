@@ -130,10 +130,11 @@
 
     if(completed){
       var c=typeof stored.lastCorrect==='number'?stored.lastCorrect:Math.round(stored.last/100*DATA.length),n=attemptCount(stored);
-      score.textContent='Letzter Versuch: '+c+' / '+DATA.length+' richtig ('+stored.last+' %) · '+Math.min(n,2)+'/2 Durchgänge · Best '+stored.best+' %';
-      score.style.color=scoreColor(stored.last);check.textContent=n>=2?'✓ 2/2 erledigt':'✓ 1/2 erledigt';check.disabled=true;
+      score.textContent='Letzter Versuch: '+c+' / '+DATA.length+' richtig ('+stored.last+' %) · Durchgang '+n+' · Best '+stored.best+' %';
+      score.style.color=scoreColor(stored.last);check.textContent=n>=2?'✓ Mindestziel 2/2 erfüllt':'✓ 1/2 erledigt';check.disabled=true;
     }else{
-      score.textContent=(fresh?'2. Durchgang: ':'')+'0 / '+DATA.length+' richtig';
+      var nextAttempt=attemptCount(stored)+1;
+      score.textContent=(fresh?nextAttempt+'. Durchgang: ':'')+'0 / '+DATA.length+' richtig';
       score.style.color='var(--text-muted)';check.textContent='✅ Überprüfen';check.disabled=false;
     }
     updateProgress();
@@ -164,18 +165,33 @@
     saveProgress(pct,chosen,correct);
     if(typeof saveQuestScore==='function')saveQuestScore('q8',pct);
     var xp=typeof awardQuestImprovementXP==='function'?awardQuestImprovementXP('q8',correct,5):0,saved=loadProgress().A,n=attemptCount(saved);
-    score.textContent=correct+' / '+selects.length+' richtig ('+pct+' %) · '+Math.min(n,2)+'/2 Durchgänge · Best '+saved.best+' %'+(xp?' · +'+xp+' XP':'');
-    score.style.color=scoreColor(pct);check.textContent=n>=2?'✓ 2/2 erledigt':'✓ 1/2 erledigt';check.disabled=true;fresh=false;updateCompletion();renderSummary();
+    score.textContent=correct+' / '+selects.length+' richtig ('+pct+' %) · Durchgang '+n+' · Best '+saved.best+' %'+(xp?' · +'+xp+' XP':'');
+    score.style.color=scoreColor(pct);check.textContent=n>=2?'✓ Mindestziel 2/2 erfüllt':'✓ 1/2 erledigt';check.disabled=true;fresh=false;updateCompletion();renderSummary();
   }
 
   function handleCheck(){var progress=loadProgress().A,alreadyDone=!fresh&&progress&&typeof progress.last==='number';if(alreadyDone)return;evaluate();}
-  function updateCompletion(){var n=attemptCount(loadProgress().A),active=fresh;byId('a4SecondPassCard').style.display=n===1&&!active?'block':'none';byId('a4DoneCard').style.display=n>=2?'block':'none';}
-  function startSecondPass(){if(attemptCount(loadProgress().A)!==1)return;fresh=true;renderQuest();updateCompletion();byId('q8QuestCard').scrollIntoView({behavior:'smooth',block:'start'});}
+  function updateCompletion(){
+    var n=attemptCount(loadProgress().A),active=fresh,repeat=byId('a4SecondPassCard'),done=byId('a4DoneCard'),title=repeat&&repeat.querySelector('h2'),copy=repeat&&repeat.querySelector('p'),button=byId('startSecondPassBtn');
+    if(repeat)repeat.style.display=n>=1&&!active?'block':'none';
+    if(done)done.style.display=n>=2&&!active?'block':'none';
+    if(n===1){
+      if(title)title.textContent='Noch ein Durchgang bis zum Mindestziel ↻';
+      if(copy)copy.textContent='Bearbeite Quest 8 ein zweites Mal ohne eingeblendete Theorie. Danach ist das Mindestziel 2/2 erfüllt. Du kannst anschliessend beliebig oft weiter üben; nur dein Bestwert zählt.';
+      if(button)button.textContent='2. Durchgang starten';
+    }else if(n>=2){
+      if(title)title.textContent='Weiter üben ↻';
+      if(copy)copy.textContent='Mindestziel 2/2 erfüllt. Du kannst Quest 8 beliebig oft wiederholen; für die Fleissnote zählt nur dein Bestwert.';
+      if(button)button.textContent=(n+1)+'. Durchgang starten';
+      var doneCopy=done&&done.querySelector('p');
+      if(doneCopy)doneCopy.textContent='Mindestziel 2/2 erfüllt. Du kannst hier trotzdem beliebig oft weiter üben; für die Fleissnote zählt dein Bestwert. Als Nächstes folgt Windows & Arbeitsalltag in A5.';
+    }
+  }
+  function startSecondPass(){if(attemptCount(loadProgress().A)<1)return;fresh=true;renderQuest();updateCompletion();byId('q8QuestCard').scrollIntoView({behavior:'smooth',block:'start'});}
   function renderSummary(){
     var s=loadProgress().A,host=byId('summaryRows');host.innerHTML='';
     var row=document.createElement('div'),qEl=document.createElement('div'),name=document.createElement('div'),vals=document.createElement('div');
     row.className='summary-row';qEl.className='summary-q';qEl.textContent='Q8';qEl.style.color=META.theme.accent;name.textContent=META.name;vals.className='summary-vals';
-    if(!s)vals.textContent='noch offen';else{var parts=['1. '+s.first+' %'];if(typeof s.second==='number')parts.push('2. '+s.second+' %');parts.push('Best '+s.best+' %');vals.textContent=parts.join(' · ');}
+    if(!s)vals.textContent='noch offen';else{var parts=['1. '+s.first+' %'];if(typeof s.second==='number')parts.push('2. '+s.second+' %');var n=attemptCount(s);parts.push(n+' '+(n===1?'Durchgang':'Durchgänge'));parts.push('Best '+s.best+' %');vals.textContent=parts.join(' · ');}
     vals.style.color=s?scoreColor(s.best):'var(--text-muted)';row.appendChild(qEl);row.appendChild(name);row.appendChild(vals);host.appendChild(row);
   }
   function scrollTo(id){var el=byId(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}

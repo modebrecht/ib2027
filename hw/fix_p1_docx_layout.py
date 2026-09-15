@@ -8,6 +8,8 @@ from docx.oxml.ns import qn
 
 PATH = Path('hw/P1.docx')
 SAFE_WIDTH_CM = 17.2
+DARK = '0F172A'
+STRONG = '334155'
 
 
 def set_cell_width(cell, width_cm):
@@ -114,7 +116,67 @@ def compact_short_answer_table(table):
                 paragraph.paragraph_format.line_spacing = 1.0
 
 
-def set_paragraph_bottom_border(paragraph, color='94A3B8', size='6'):
+def set_cell_frame(cell, color=STRONG, size='8'):
+    """Give a cell an explicit high-contrast outline; never rely on fill alone."""
+    tc_pr = cell._tc.get_or_add_tcPr()
+    borders = tc_pr.first_child_found_in('w:tcBorders')
+    if borders is None:
+        borders = OxmlElement('w:tcBorders')
+        tc_pr.append(borders)
+    for edge_name in ('top', 'left', 'bottom', 'right'):
+        edge = borders.find(qn(f'w:{edge_name}'))
+        if edge is None:
+            edge = OxmlElement(f'w:{edge_name}')
+            borders.append(edge)
+        edge.set(qn('w:val'), 'single')
+        edge.set(qn('w:sz'), size)
+        edge.set(qn('w:space'), '0')
+        edge.set(qn('w:color'), color)
+
+
+def strengthen_table_readability(table):
+    """High-contrast structural cues for old/washed-out classroom monitors."""
+    text = ' | '.join(cell.text.strip() for row in table.rows for cell in row.cells)
+
+    # EVA: every row is visibly separated; the actual response column is a
+    # strong answer box rather than a pale-grey area.
+    if 'Situation' in text and 'Antwort (E / V / A)' in text:
+        for row_index, row in enumerate(table.rows):
+            for col_index, cell in enumerate(row.cells):
+                set_cell_frame(cell, DARK if row_index == 0 or col_index == 1 else STRONG,
+                               '14' if row_index > 0 and col_index == 1 else '8')
+        return
+
+    # Anschluss matching: same treatment as EVA. The right-hand cell is the
+    # writable response field and gets the strongest outline.
+    if 'Moderner Monitor oder Fernseher' in text and 'Interne SSD direkt auf dem Mainboard' in text:
+        for row in table.rows:
+            set_cell_frame(row.cells[0], STRONG, '8')
+            set_cell_frame(row.cells[1], DARK, '14')
+        return
+
+    # Troubleshooting option grids must remain legible even when very light
+    # greys disappear. Each option therefore has a real visible boundary.
+    flat = [cell.text.strip() for row in table.rows for cell in row.cells]
+    if len(flat) == 6 and all(value.startswith(('□', '☐')) for value in flat):
+        for row in table.rows:
+            for cell in row.cells:
+                set_cell_frame(cell, STRONG, '8')
+        return
+
+    # Laptop comparison and scoring areas also keep their structure without
+    # relying on subtle background shades.
+    if 'LAPTOP A' in text and 'LAPTOP B' in text:
+        for row in table.rows:
+            for cell in row.cells:
+                set_cell_frame(cell, DARK, '8')
+    elif 'ERREICHTE PUNKTE' in text and 'GESAMTPUNKTE' in text and 'NOTE' in text:
+        for row in table.rows:
+            for cell in row.cells:
+                set_cell_frame(cell, DARK, '8')
+
+
+def set_paragraph_bottom_border(paragraph, color=DARK, size='10'):
     p_pr = paragraph._p.get_or_add_pPr()
     p_bdr = p_pr.find(qn('w:pBdr'))
     if p_bdr is None:
@@ -135,7 +197,9 @@ def make_blank_writable_line(paragraph, in_cell=False):
     paragraph.paragraph_format.space_before = Pt(1)
     paragraph.paragraph_format.space_after = Pt(4 if not in_cell else 1)
     paragraph.paragraph_format.line_spacing = 1.0
-    set_paragraph_bottom_border(paragraph, color='CBD5E1' if in_cell else '94A3B8', size='5')
+    # Dark, thick line: the writable area stays obvious on low-contrast
+    # classroom displays and in greyscale/poor projector conditions.
+    set_paragraph_bottom_border(paragraph, color=DARK, size='10')
 
 
 def walk_paragraphs(container, in_cell=False):
@@ -182,6 +246,7 @@ for table in doc.tables:
     if ('Situation' in table_text and 'Antwort (E / V / A)' in table_text) or \
        ('Moderner Monitor oder Fernseher' in table_text and 'Interne SSD direkt auf dem Mainboard' in table_text):
         compact_short_answer_table(table)
+    strengthen_table_readability(table)
 
 # Any paragraph that consists only of underscore placeholders becomes a real
 # blank writable line. Students can click and type immediately; there is no

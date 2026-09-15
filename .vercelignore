@@ -1,0 +1,7 @@
+# Source-only high-resolution images. The worksheets use the optimized
+# WebP copies in hw/assets/, so these originals do not need deployment.
+hw/assets/hq/
+
+# CI and browser-test sources are not part of the student-facing site.
+.github/
+e2e/

@@ -90,7 +90,7 @@ test.describe('TK2 score history / retry regression', () => {
     expect(await readJson(page, 'tk_quest_scores_v1')).toEqual(scores);
   });
 
-  test('A4 Q8 keeps first / second / best and best quest score', async ({ page }) => {
+  test('A4 Q8 supports unlimited retries and keeps first / second / best', async ({ page }) => {
     await openClean(page, '/tk2/A4.html');
 
     const first = await answerSelectRound(page, '#q8Questions .answer-select', '#q8CheckBtn', 2);
@@ -111,12 +111,27 @@ test.describe('TK2 score history / retry regression', () => {
     expect(saved.A.best).toBe(100);
     expect((await readJson(page, 'tk_quest_scores_v1')).q8).toBe(100);
 
+    await expect(page.locator('#a4SecondPassCard')).toBeVisible();
+    await expect(page.locator('#startSecondPassBtn')).toContainText('3. Durchgang');
+    await page.locator('#startSecondPassBtn').click();
+    const third = await answerSelectRound(page, '#q8Questions .answer-select', '#q8CheckBtn', 4);
+
+    saved = await readJson(page, 'tk_a4_progress_v1');
+    expect(saved.A.attempts).toBe(3);
+    expect(saved.A.first).toBe(first);
+    expect(saved.A.second).toBe(second);
+    expect(saved.A.last).toBe(third);
+    expect(saved.A.best).toBe(100);
+    expect((await readJson(page, 'tk_quest_scores_v1')).q8).toBe(100);
+
     await page.reload({ waitUntil: 'domcontentloaded' });
     expect(await readJson(page, 'tk_a4_progress_v1')).toEqual(saved);
-    await expect(page.locator('#q8CheckBtn')).toContainText('2/2');
+    await expect(page.locator('#a4SecondPassCard')).toBeVisible();
+    await expect(page.locator('#startSecondPassBtn')).toContainText('4. Durchgang');
+    await expect(page.locator('#q8CheckBtn')).toContainText('Mindestziel 2/2');
   });
 
-  test('A5 Q9 keeps first / second / best and best quest score', async ({ page }) => {
+  test('A5 Q9 supports unlimited retries and keeps first / second / best', async ({ page }) => {
     await openClean(page, '/tk2/A5.html');
 
     const first = await answerSelectRound(page, '#q9Questions .answer-select', '#q9CheckBtn', 2);
@@ -137,9 +152,24 @@ test.describe('TK2 score history / retry regression', () => {
     expect(saved.A.best).toBe(100);
     expect((await readJson(page, 'tk_quest_scores_v1')).q9).toBe(100);
 
+    await expect(page.locator('#a5SecondPassCard')).toBeVisible();
+    await expect(page.locator('#startSecondPassBtn')).toContainText('3. Durchgang');
+    await page.locator('#startSecondPassBtn').click();
+    const third = await answerSelectRound(page, '#q9Questions .answer-select', '#q9CheckBtn', 5);
+
+    saved = await readJson(page, 'tk_a5_progress_v1');
+    expect(saved.A.attempts).toBe(3);
+    expect(saved.A.first).toBe(first);
+    expect(saved.A.second).toBe(second);
+    expect(saved.A.last).toBe(third);
+    expect(saved.A.best).toBe(100);
+    expect((await readJson(page, 'tk_quest_scores_v1')).q9).toBe(100);
+
     await page.reload({ waitUntil: 'domcontentloaded' });
     expect(await readJson(page, 'tk_a5_progress_v1')).toEqual(saved);
-    await expect(page.locator('#q9CheckBtn')).toContainText('2/2');
+    await expect(page.locator('#a5SecondPassCard')).toBeVisible();
+    await expect(page.locator('#startSecondPassBtn')).toContainText('4. Durchgang');
+    await expect(page.locator('#q9CheckBtn')).toContainText('Mindestziel 2/2');
   });
 
   test('A6 retry preserves first score while best can improve and never regress', async ({ page }) => {

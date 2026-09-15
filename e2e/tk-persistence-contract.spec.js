@@ -140,7 +140,7 @@ test.describe('TK2 persistence contract A1-A7', () => {
     expect(restoredProgress.pdfReady).toBe(true);
   });
 
-  test('index derives Done state for A1-A7 from persisted course data after reload', async ({ page }) => {
+  test('index derives A1-A7 Done state while A8 remains open after reload', async ({ page }) => {
     await openClean(page, '/tk2/index.html');
     const now = '2026-08-29T12:00:00.000Z';
     await writeJson(page, 'tk_quest_scores_v1', {
@@ -176,7 +176,10 @@ test.describe('TK2 persistence contract A1-A7', () => {
       await expect(page.locator(`#module-a${i}`)).toHaveClass(/done/);
       await expect(page.locator(`#module-a${i} .module-state`)).toHaveText('Done');
     }
-    await expect(page.locator('#progressText')).toHaveText('7 / 7');
-    await expect(page.locator('#courseDone')).toBeVisible();
+    await expect(page.locator('#module-a8')).not.toHaveClass(/done/);
+    await expect(page.locator('#module-a8 .module-state')).toHaveText('offen');
+    await expect(page.locator('#progressText')).toHaveText('7 / 8');
+    await expect(page.locator('#courseDone')).toBeHidden();
+    await expect(page.locator('#resumeBtn')).toHaveAttribute('href', 'A8/');
   });
 });
