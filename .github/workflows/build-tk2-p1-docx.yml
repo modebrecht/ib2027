@@ -9,6 +9,7 @@ on:
       - 'tk2/P1.md'
       - 'tk2/create_p1_docx.py'
       - 'tk2/compact_p1_layout.py'
+      - 'scripts/p1_altgr_readability.py'
       - 'scripts/enforce_p1_docx_readability.py'
       - '.github/workflows/build-tk2-p1-docx.yml'
 
@@ -38,6 +39,7 @@ jobs:
         run: |
           python tk2/create_p1_docx.py
           python tk2/compact_p1_layout.py
+          python scripts/p1_altgr_readability.py tk2/P1.docx
           python scripts/enforce_p1_docx_readability.py tk2/P1.docx
 
       - name: Upload DOCX for visual QA
