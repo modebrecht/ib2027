@@ -44,16 +44,12 @@ jobs:
 
             rsync -a --delete \
               --exclude='.git' \
-              --exclude='.github/workflows/sync-ib2026-all-branches-once.yml' \
+              --exclude='.github/workflows/' \
               /tmp/ib2026-sync/ ./
-
-            if [ "$branch" = "main" ]; then
-              rm -f .github/workflows/sync-ib2026-all-branches-once.yml
-            fi
 
             git add -A
             if git diff --cached --quiet; then
-              echo "$branch already matches ib2026"
+              echo "$branch already matches ib2026 outside workflows"
             else
               git commit -m "sync: mirror ib2026/$branch into ib2027/$branch"
               git push origin "HEAD:$branch"
